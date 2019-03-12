@@ -18,25 +18,40 @@ void setup()
   }
 
   Enes100Simulation.println(Enes100Simulation.destination.y);
+  
+  int targetRow = checkRowLocation(Enes100Simulation.destination.y);
+  Enes100Simulation.updateLocation();
+  moveToRow(targetRow);
+  go();
 }
 
 void loop() 
 {
-  int targetRow = checkRowLocation(Enes100Simulation.destination.y);
-  Enes100Simulation.updateLocation();
-  moveToRow(targetRow);
-  Enes100Simulation.updateLocation();
+
   //Keep moving forward until you reach an obstacle  
-  go();
+  Enes100Simulation.updateLocation();
   while(Enes100Simulation.readDistanceSensor(1) > .15) 
   {
-    Enes100Simulation.updateLocation(); 
+    Enes100Simulation.updateLocation();
+    if (Enes100Simulation.location.x > Enes100Simulation.destination.x)
+    {
+      stop();
+      faceDestination();
+      go();
+      while (Enes100Simulation.location.y < (Enes100Simulation.destination.y - .125) || Enes100Simulation.location.y > (Enes100Simulation.destination.y + .125))
+      {
+        Enes100Simulation.updateLocation();
+      }
+      stop();
+      Enes100Simulation.println("Arrived at mission site");
+      while(1);
+    }
   }
-
+  
+  Enes100Simulation.updateLocation();
 //Check location of OSV and move based on row location
 //Row 1 is top, row 2 is middle, row 3 is bottom
   int row = checkRowLocation(Enes100Simulation.location.y);
-  Enes100Simulation.println(row);
   Enes100Simulation.println(Enes100Simulation.location.y);
   if (row == 1)
   {
@@ -54,21 +69,23 @@ void loop()
   }
 
   Enes100Simulation.updateLocation();
+  go();
 }
 
 void go()
 {
+  Enes100Simulation.println("go");
   TankSimulation.setLeftMotorPWM(255);
   TankSimulation.setRightMotorPWM(255);
 
   Enes100Simulation.updateLocation();
 }
 
-int checkRowLocation(int y)
+int checkRowLocation(double y)
 {
   //This function will tell you whether you are in the top, middle, or bottom row
-  int row = 0;
-
+  int row;
+  Enes100Simulation.println("check row ");
   if (y <= .667)
   {
     row = 3;
@@ -83,17 +100,21 @@ int checkRowLocation(int y)
   {
     row = 2;
   }
-    Enes100Simulation.println(y);
+  Enes100Simulation.println(row);
   return row;
 }
 
 void moveToRow(int row)
 {
+  Enes100Simulation.println("Moving to ");
+  Enes100Simulation.println(row);
+  
   if (row == 1)
   {
-    turn("up");
+    turn('u');
     go();
-    while (Enes100Simulation.location.y < 1.334)
+    Enes100Simulation.updateLocation();
+    while (Enes100Simulation.location.y < 1.5)
     {
       Enes100Simulation.updateLocation();
     }
@@ -101,91 +122,198 @@ void moveToRow(int row)
 
   if (row == 2)
   {
-    if (checkRowLocation(Enes100Simulation.location.y) > 1)
+    if ((Enes100Simulation.location.y) > 1)
     {
-      turn("down");
+      Enes100Simulation.println("MOVING DOWNWARDS");
+      turn('d');
       go();
+      Enes100Simulation.updateLocation();
       while (Enes100Simulation.location.y > 1)
       {
         Enes100Simulation.updateLocation();
       }
     }
 
-  else
+    else
     {
-      turn("up");
+      Enes100Simulation.println("MOVING UPWARDS");
+      turn('u');
       go();
+      Enes100Simulation.updateLocation();
       while (Enes100Simulation.location.y < 1)
       {
         Enes100Simulation.updateLocation();
       }
     }
-
-    turn("right");
   }
   
   if (row == 3)
   {
-    turn("down");
+    turn('d');
     go();
-    while (Enes100Simulation.location.y > .667)
+    while (Enes100Simulation.location.y > .5)
     {
       Enes100Simulation.updateLocation();
     }
-    turn("right");
   }
+  
+  turn('r');
+  Enes100Simulation.println("arrived at ");
+  Enes100Simulation.println(checkRowLocation(Enes100Simulation.location.y));
+
 }
 
-void turn(String direction)
+void turn(char direction)
 {
+  Enes100Simulation.println("IMPORTANT");
+  int dir = turnDirection(direction);
+  int r = 0;
+  int l = 0;
   
-  if (direction == "up")
+  if (dir == 0)
+  //counter
   {
+    r = 255;
+    l = -255;
+  }
+  else if (dir == 1)
+  //clock
+  {
+    r = -255;
+    l = 255;
+  }
+  
+  Enes100Simulation.println("Turning ");
+  if (direction == 'u')
+  {
+    TankSimulation.setLeftMotorPWM(r);
+    TankSimulation.setRightMotorPWM(l);
+    
     while((Enes100Simulation.location.theta) > (3.14 / 2 + .2) || (Enes100Simulation.location.theta) < (3.14 / 2 - .2))
     {
-      TankSimulation.setLeftMotorPWM(255);
-      TankSimulation.setRightMotorPWM(-255);
-
       Enes100Simulation.updateLocation();
     }
   
   }
   
- if (direction == "down")
+ if (direction == 'd')
   {
+    TankSimulation.setLeftMotorPWM(r);
+    TankSimulation.setRightMotorPWM(l);
+
     while((Enes100Simulation.location.theta) < -1 * (3.14 / 2 + .2) || (Enes100Simulation.location.theta) > -1 * (3.14 / 2 - .2))
     {
-      TankSimulation.setLeftMotorPWM(255);
-      TankSimulation.setRightMotorPWM(-255);
-
       Enes100Simulation.updateLocation();
-
     }
   }
 
-  if (direction == "left")
+  if (direction == 'l')
   {
+    TankSimulation.setLeftMotorPWM(r);
+    TankSimulation.setRightMotorPWM(l);
+
     while((Enes100Simulation.location.theta) > (3.14 + .2) || (Enes100Simulation.location.theta) < (3.14 - .2))
     {
-      TankSimulation.setLeftMotorPWM(255);
-      TankSimulation.setRightMotorPWM(-255);
-
       Enes100Simulation.updateLocation();
-
     }
   }
 
-  if (direction == "right")
+  if (direction == 'r')
   {
+    TankSimulation.setLeftMotorPWM(r);
+    TankSimulation.setRightMotorPWM(l);
+    
     while(abs(Enes100Simulation.location.theta) > 0.2)
     {
-      TankSimulation.setLeftMotorPWM(255);
-      TankSimulation.setRightMotorPWM(-255);
       Enes100Simulation.updateLocation();
-
     }
   }
 
-TankSimulation.turnOffMotors();
+stop();
 
+}
+
+void stop()
+{
+  TankSimulation.turnOffMotors();
+}
+
+int turnDirection(char orientation)
+{
+  int dir;
+  double thetaOSV = convertToLogicalRadians(Enes100Simulation.location.theta);
+  double thetaTarget = 0;
+  
+  if (orientation == 'u')
+  {
+    thetaTarget = 3.14 / 2;
+  }
+  else if (orientation == 'l')
+  {
+    thetaTarget = 3.14;
+  }
+  
+  else if (orientation == 'd')
+  {
+    thetaTarget = 3.14 / 2 + 3.14;
+  }
+  
+  else if (orientation == 'r')
+  {
+    thetaTarget = 6.28;
+  }
+  
+  
+  Enes100Simulation.println(thetaTarget);
+  if (thetaTarget > thetaOSV)
+    {
+      if ((thetaTarget - thetaOSV) <= 3.14)
+      {
+        dir = 1;
+      }
+    
+      if ((thetaTarget - thetaOSV) > 3.14)
+      {
+        dir = 0;
+      }
+    }
+
+  else
+  {
+    if ((thetaOSV - thetaTarget) <= 3.14)
+    {
+      dir = 0;
+    }
+
+    else
+    {
+      dir = 1;
+    }
+  }
+    Enes100Simulation.println(dir);
+    return dir;
+}
+double convertToLogicalRadians(double theta)
+{
+  if (theta < 0)
+  {
+    theta = 6.28 - abs(theta);
+  }
+  else
+  {
+    theta = theta;
+  }
+  return theta;
+}
+
+void faceDestination()
+{
+  stop();
+  double theta = -1*atan((Enes100Simulation.location.y - Enes100Simulation.destination.y) / (Enes100Simulation.location.x - Enes100Simulation.destination.x));
+  while((Enes100Simulation.location.theta) > theta + .2 || (Enes100Simulation.location.theta) < theta - .2)
+  {
+    TankSimulation.setLeftMotorPWM(255);
+    TankSimulation.setRightMotorPWM(-255);
+    Enes100Simulation.updateLocation();
+  }
 }
