@@ -2,6 +2,7 @@
 #include <TankSimulation.h>
 #include <math.h>
 
+//Begin simulator
 void setup() 
 {
   // put your setup code here, to run once:
@@ -17,25 +18,35 @@ void setup()
     Enes100Simulation.println("Unable to update location");
   }
 
-  Enes100Simulation.println(Enes100Simulation.destination.y);
-  
+  //Move to same row as destination
   int targetRow = checkRowLocation(Enes100Simulation.destination.y);
   Enes100Simulation.updateLocation();
   moveToRow(targetRow);
+
   go();
 }
 
+//Steps:
+//Move to right until an obstacle is located
+//Ensure OSV isn't approaching mission site; if so then go to there
+//If an obstacle is detected:
+//Move to another row 
+//Repeat
 void loop() 
 {
-
+  int tempX = Enes100Simulation.location.x;
+  int tempY = Enes100Simulation.location.y;
   //Keep moving forward until you reach an obstacle  
   Enes100Simulation.updateLocation();
-  while(Enes100Simulation.readDistanceSensor(1) > .15) 
-  {
-    Enes100Simulation.updateLocation();
+  
+  while(Enes100Simulation.readDistanceSensor(1) > .125) 
+  { 
+      Enes100Simulation.updateLocation();
+    //See if you've passed all obstacles
     if (Enes100Simulation.location.x > Enes100Simulation.destination.x)
     {
       stop();
+      //Look at mission site and move towards it
       faceDestination();
       go();
       while (Enes100Simulation.location.y < (Enes100Simulation.destination.y - .125) || Enes100Simulation.location.y > (Enes100Simulation.destination.y + .125))
@@ -46,6 +57,8 @@ void loop()
       Enes100Simulation.println("Arrived at mission site");
       while(1);
     }
+    tempX = Enes100Simulation.location.x;
+    tempY = Enes100Simulation.location.y;
   }
   
   Enes100Simulation.updateLocation();
@@ -169,18 +182,19 @@ void turn(char direction)
   int dir = turnDirection(direction);
   int r = 0;
   int l = 0;
+  double t = .05;
   
   if (dir == 0)
   //counter
   {
-    r = 255;
-    l = -255;
+    r = 200;
+    l = -200;
   }
   else if (dir == 1)
   //clock
   {
-    r = -255;
-    l = 255;
+    r = -200;
+    l = 200;
   }
   
   Enes100Simulation.println("Turning ");
@@ -189,7 +203,7 @@ void turn(char direction)
     TankSimulation.setLeftMotorPWM(r);
     TankSimulation.setRightMotorPWM(l);
     
-    while((Enes100Simulation.location.theta) > (3.14 / 2 + .2) || (Enes100Simulation.location.theta) < (3.14 / 2 - .2))
+    while((Enes100Simulation.location.theta) > (3.14 / 2 + t) || (Enes100Simulation.location.theta) < (3.14 / 2 - t))
     {
       Enes100Simulation.updateLocation();
     }
@@ -201,7 +215,7 @@ void turn(char direction)
     TankSimulation.setLeftMotorPWM(r);
     TankSimulation.setRightMotorPWM(l);
 
-    while((Enes100Simulation.location.theta) < -1 * (3.14 / 2 + .2) || (Enes100Simulation.location.theta) > -1 * (3.14 / 2 - .2))
+    while((Enes100Simulation.location.theta) < -1 * (3.14 / 2 + t) || (Enes100Simulation.location.theta) > -1 * (3.14 / 2 - t))
     {
       Enes100Simulation.updateLocation();
     }
@@ -212,7 +226,7 @@ void turn(char direction)
     TankSimulation.setLeftMotorPWM(r);
     TankSimulation.setRightMotorPWM(l);
 
-    while((Enes100Simulation.location.theta) > (3.14 + .2) || (Enes100Simulation.location.theta) < (3.14 - .2))
+    while((Enes100Simulation.location.theta) > (3.14 + t) || (Enes100Simulation.location.theta) < (3.14 - t))
     {
       Enes100Simulation.updateLocation();
     }
@@ -223,7 +237,7 @@ void turn(char direction)
     TankSimulation.setLeftMotorPWM(r);
     TankSimulation.setRightMotorPWM(l);
     
-    while(abs(Enes100Simulation.location.theta) > 0.2)
+    while(abs(Enes100Simulation.location.theta) > t)
     {
       Enes100Simulation.updateLocation();
     }
@@ -263,7 +277,6 @@ int turnDirection(char orientation)
     thetaTarget = 6.28;
   }
   
-  
   Enes100Simulation.println(thetaTarget);
   if (thetaTarget > thetaOSV)
     {
@@ -293,6 +306,7 @@ int turnDirection(char orientation)
     Enes100Simulation.println(dir);
     return dir;
 }
+
 double convertToLogicalRadians(double theta)
 {
   if (theta < 0)
